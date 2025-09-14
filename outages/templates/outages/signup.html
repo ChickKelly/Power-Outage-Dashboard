@@ -1,0 +1,204 @@
+{% extends 'outages/base.html' %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+    <h1>Sign Up</h1>
+    <form method="post" id="signupForm" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-group">
+                {{ field }}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% if field.help_text %}
+                    <div class="help-text">{{ field.help_text }}</div>
+                {% endif %}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <div class="error-message">
+                            <span>⚠️</span> {{ error }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn" id="signupBtn">Sign Up</button>
+    </form>
+    <div class="switch-form">
+        <p>Already have an account? <a href="{% url 'login' %}">Log In</a></p>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('signupForm');
+    const submitBtn = document.getElementById('signupBtn');
+    
+    // Get form fields
+    const usernameField = document.getElementById('id_username');
+    const emailField = document.getElementById('id_email');
+    const firstNameField = document.getElementById('id_first_name');
+    const lastNameField = document.getElementById('id_last_name');
+    const password1Field = document.getElementById('id_password1');
+    const password2Field = document.getElementById('id_password2');
+    
+    // Real-time validation
+    if (usernameField) {
+        usernameField.addEventListener('blur', function() {
+            const errors = validateUsername(this.value);
+            if (errors.length > 0) {
+                showFieldError(this, errors[0]);
+            } else if (this.value) {
+                showFieldSuccess(this);
+            }
+        });
+        
+        usernameField.addEventListener('input', function() {
+            if (this.value.length > 0) {
+                clearFieldValidation(this);
+            }
+        });
+    }
+    
+    if (emailField) {
+        emailField.addEventListener('blur', function() {
+            if (this.value && !validateEmail(this.value)) {
+                showFieldError(this, 'Please enter a valid email address');
+            } else if (this.value) {
+                showFieldSuccess(this);
+            }
+        });
+        
+        emailField.addEventListener('input', function() {
+            if (this.value.length > 0) {
+                clearFieldValidation(this);
+            }
+        });
+    }
+    
+    if (firstNameField) {
+        firstNameField.addEventListener('blur', function() {
+            const error = validateName(this.value);
+            if (error) {
+                showFieldError(this, error);
+            } else if (this.value) {
+                showFieldSuccess(this);
+            }
+        });
+        
+        firstNameField.addEventListener('input', function() {
+            if (this.value.length > 0) {
+                clearFieldValidation(this);
+            }
+        });
+    }
+    
+    if (lastNameField) {
+        lastNameField.addEventListener('blur', function() {
+            const error = validateName(this.value);
+            if (error) {
+                showFieldError(this, error);
+            } else if (this.value) {
+                showFieldSuccess(this);
+            }
+        });
+        
+        lastNameField.addEventListener('input', function() {
+            if (this.value.length > 0) {
+                clearFieldValidation(this);
+            }
+        });
+    }
+    
+    if (password1Field) {
+        password1Field.addEventListener('blur', function() {
+            const errors = validatePassword(this.value);
+            if (errors.length > 0) {
+                showFieldError(this, errors[0]);
+            } else if (this.value) {
+                showFieldSuccess(this);
+            }
+        });
+        
+        password1Field.addEventListener('input', function() {
+            if (this.value.length > 0) {
+                clearFieldValidation(this);
+            }
+        });
+    }
+    
+    if (password2Field) {
+        password2Field.addEventListener('blur', function() {
+            if (this.value && password1Field.value && this.value !== password1Field.value) {
+                showFieldError(this, 'Passwords do not match');
+            } else if (this.value && password1Field.value && this.value === password1Field.value) {
+                showFieldSuccess(this);
+            }
+        });
+        
+        password2Field.addEventListener('input', function() {
+            if (this.value.length > 0) {
+                clearFieldValidation(this);
+            }
+        });
+    }
+    
+    // Form submission with validation
+    form.addEventListener('submit', function(e) {
+        let hasErrors = false;
+        
+        // Validate all fields before submission
+        if (usernameField) {
+            const errors = validateUsername(usernameField.value);
+            if (errors.length > 0) {
+                showFieldError(usernameField, errors[0]);
+                hasErrors = true;
+            }
+        }
+        
+        if (emailField && !validateEmail(emailField.value)) {
+            showFieldError(emailField, 'Please enter a valid email address');
+            hasErrors = true;
+        }
+        
+        if (firstNameField) {
+            const error = validateName(firstNameField.value);
+            if (error) {
+                showFieldError(firstNameField, error);
+                hasErrors = true;
+            }
+        }
+        
+        if (lastNameField) {
+            const error = validateName(lastNameField.value);
+            if (error) {
+                showFieldError(lastNameField, error);
+                hasErrors = true;
+            }
+        }
+        
+        if (password1Field) {
+            const errors = validatePassword(password1Field.value);
+            if (errors.length > 0) {
+                showFieldError(password1Field, errors[0]);
+                hasErrors = true;
+            }
+        }
+        
+        if (password2Field && password1Field && password2Field.value !== password1Field.value) {
+            showFieldError(password2Field, 'Passwords do not match');
+            hasErrors = true;
+        }
+        
+        if (hasErrors) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Show loading state
+        setButtonLoading(submitBtn, true);
+    });
+});
+</script>
+{% endblock %}

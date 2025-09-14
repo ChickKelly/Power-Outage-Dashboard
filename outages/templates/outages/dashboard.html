@@ -1,0 +1,328 @@
+{% extends 'outages/base.html' %}
+
+{% block title %}Power Outage Dashboard{% endblock %}
+
+{% block container_class %}dashboard{% endblock %}
+
+{% block content %}
+    <div class="dashboard-header">
+        <div class="header-left">
+            <h1>Power Outage Dashboard</h1>
+            <p class="dashboard-subtitle">{{ "now"|date:"l, F jS Y" }}</p>
+        </div>
+        <div class="header-right">
+            <span class="user-info">{{ user.username }} ({{ user.get_role_display }})</span>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-logout">Log Out</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="notification-area"></div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="stat-card primary">
+            <div class="stat-icon">🏘️</div>
+            <div class="stat-content">
+                <h3>{{ stats.total_communities }}</h3>
+                <p>Communities Monitored</p>
+                <span class="stat-change positive">+{{ stats.communities_with_power }} Active</span>
+            </div>
+        </div>
+
+        <div class="stat-card warning">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-content">
+                <h3>{{ stats.total_active_outages }}</h3>
+                <p>Active Outages</p>
+                <span class="stat-change negative">{{ stats.communities_without_power }} Communities Affected</span>
+            </div>
+        </div>
+
+        <div class="stat-card success">
+            <div class="stat-icon">✅</div>
+            <div class="stat-content">
+                <h3>{{ stats.resolved_today }}</h3>
+                <p>Resolved Today</p>
+                <span class="stat-change positive">{{ stats.response_rate }} Response Rate</span>
+            </div>
+        </div>
+
+        <div class="stat-card info">
+            <div class="stat-icon">👥</div>
+            <div class="stat-content">
+                <h3>{{ stats.total_team_members }}</h3>
+                <p>Team Members</p>
+                <span class="stat-change neutral">{{ stats.repair_team_members }} Repair | {{ stats.admin_members }} Admin</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="dashboard-grid">
+        <!-- Outage Analytics Chart -->
+        <div class="dashboard-card chart-card">
+            <div class="card-header">
+                <h3>Outage Analytics</h3>
+                <span class="period-selector">Last 6 Months</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="outageChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="dashboard-card metrics-card">
+            <div class="card-header">
+                <h3>Performance Metrics</h3>
+            </div>
+            <div class="metrics-list">
+                <div class="metric-item">
+                    <div class="metric-circle" data-percentage="98.5">
+                        <span>98.5%</span>
+                    </div>
+                    <div class="metric-info">
+                        <h4>System Uptime</h4>
+                        <p>Last 30 days</p>
+                    </div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-bar">
+                        <div class="metric-bar-fill" style="width: 85%"></div>
+                    </div>
+                    <div class="metric-info">
+                        <h4>Avg Resolution Time</h4>
+                        <p>{{ stats.avg_resolution_time }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Outages -->
+        <div class="dashboard-card outages-card">
+            <div class="card-header">
+                <h3>Active Outages</h3>
+                <span class="badge">{{ stats.total_active_outages }}</span>
+            </div>
+            <div class="outages-list">
+                {% for outage in active_outages %}
+                    <div class="outage-item-new">
+                        <div class="outage-info">
+                            <h4>{{ outage.community.name }}</h4>
+                            <p>{{ outage.start_time|timesince }} ago</p>
+                        </div>
+                        <div class="outage-actions">
+                            {% if not outage.is_acknowledged %}
+                                <form method="post" action="{% url 'acknowledge_outage' outage.id %}" style="display: inline;" class="acknowledge-form">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-warning btn-sm acknowledge-btn" 
+                                        data-outage-id="{{ outage.id }}" 
+                                        data-community="{{ outage.community.name }}">
+                                    Acknowledge
+                                </button>
+                            </form>
+                            <form method="post" action="{% url 'resolve_outage' outage.id %}" style="display: inline;" class="resolve-form">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-success btn-sm resolve-btn" 
+                                        data-outage-id="{{ outage.id }}" 
+                                        data-community="{{ outage.community.name }}">
+                                    Resolve
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <p>🎉 No active outages!</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Community Status -->
+        <div class="dashboard-card communities-card">
+            <div class="card-header">
+                <h3>Community Status</h3>
+                <div class="quick-actions">
+                    <a href="{% url 'map' %}" class="btn-link">View Map</a>
+                </div>
+            </div>
+            <div class="communities-list">
+                {% for community in communities %}
+                    <div class="community-item-new">
+                        <div class="community-info">
+                            <span class="community-name">{{ community.name }}</span>
+                            <span class="community-coords">{{ community.latitude|floatformat:2 }}, {{ community.longitude|floatformat:2 }}</span>
+                        </div>
+                        <div class="power-status {% if community.power_status %}online{% else %}offline{% endif %}">
+                            {% if community.power_status %}
+                                <span class="status-dot online"></span>
+                                Online
+                            {% else %}
+                                <span class="status-dot offline"></span>
+                                Offline
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-state">
+                        <p>No communities configured. <a href="/admin/">Add some</a></p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="dashboard-card actions-card">
+            <div class="card-header">
+                <h3>Quick Actions</h3>
+            </div>
+            <div class="actions-grid">
+                <a href="{% url 'history' %}" class="action-button">
+                    <div class="action-icon">📊</div>
+                    <span>View History</span>
+                </a>
+                <a href="{% url 'map' %}" class="action-button">
+                    <div class="action-icon">🗺️</div>
+                    <span>Location Map</span>
+                </a>
+                <a href="/admin/" class="action-button">
+                    <div class="action-icon">⚙️</div>
+                    <span>Admin Panel</span>
+                </a>
+                <a href="#" class="action-button" onclick="generateReport()">
+                    <div class="action-icon">📋</div>
+                    <span>Generate Report</span>
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // WebSocket for real-time notifications
+    const outageSocket = new WebSocket(
+        'ws://'
+        + window.location.host
+        + '/ws/outages/'
+    );
+
+    outageSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        console.log('Outage notification:', data.message);
+        const notificationArea = document.getElementById('notification-area');
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+        notification.textContent = data.message;
+        notificationArea.prepend(notification);
+
+        // Automatically remove the notification after a few seconds
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => notification.remove(), 500);
+        }, 5000);
+    };
+
+    outageSocket.onclose = function(e) {
+        console.error('Outage socket closed unexpectedly');
+    };
+
+    // Initialize Chart
+    const ctx = document.getElementById('outageChart').getContext('2d');
+    const monthlyData = JSON.parse('{{ monthly_outages_json|escapejs }}');
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: monthlyData.map(item => item.month),
+            datasets: [{
+                label: 'Outages',
+                data: monthlyData.map(item => item.count),
+                backgroundColor: '#5c6bc0',
+                borderColor: '#3f51b5',
+                borderWidth: 1,
+                borderRadius: 8,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0,0,0,0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Generate Report Function
+    function generateReport() {
+        alert('Report generation feature coming soon!');
+    }
+
+    // Animate metric circles
+    document.addEventListener('DOMContentLoaded', function() {
+        const circles = document.querySelectorAll('.metric-circle');
+        circles.forEach(circle => {
+            const percentage = circle.getAttribute('data-percentage');
+            circle.style.background = `conic-gradient(#5c6bc0 ${percentage * 3.6}deg, #e0e0e0 0deg)`;
+        });
+
+        // Add confirmation dialogs for outage actions
+        const acknowledgeButtons = document.querySelectorAll('.acknowledge-btn');
+        const resolveButtons = document.querySelectorAll('.resolve-btn');
+
+        acknowledgeButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const community = this.getAttribute('data-community');
+                const form = this.closest('form');
+                
+                showConfirmDialog(
+                    'Acknowledge Outage',
+                    `Are you sure you want to acknowledge the outage at ${community}? This will notify the team that you are aware of the issue.`,
+                    function() {
+                        setButtonLoading(button, true);
+                        form.submit();
+                    }
+                );
+            });
+        });
+
+        resolveButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const community = this.getAttribute('data-community');
+                const form = this.closest('form');
+                
+                showConfirmDialog(
+                    'Resolve Outage',
+                    `Are you sure you want to mark the outage at ${community} as resolved? This will restore power status and close the outage.`,
+                    function() {
+                        setButtonLoading(button, true);
+                        form.submit();
+                    }
+                );
+            });
+        });
+    });
+</script>
+{% endblock %}

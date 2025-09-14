@@ -1,0 +1,100 @@
+{% extends 'outages/base.html' %}
+
+{% block title %}Log In{% endblock %}
+
+{% block content %}
+    <h1>Log In</h1>
+    <form method="post" id="loginForm" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="form-group">
+                {{ field }}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% if field.help_text %}
+                    <div class="help-text">{{ field.help_text }}</div>
+                {% endif %}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <div class="error-message">
+                            <span>⚠️</span> {{ error }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn" id="loginBtn">Log In</button>
+    </form>
+    <div class="switch-form">
+        <p>Don't have an account? <a href="{% url 'signup' %}">Sign Up</a></p>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('loginForm');
+    const submitBtn = document.getElementById('loginBtn');
+    
+    // Get form fields
+    const usernameField = document.getElementById('id_username');
+    const passwordField = document.getElementById('id_password');
+    
+    // Real-time validation
+    if (usernameField) {
+        usernameField.addEventListener('blur', function() {
+            if (!this.value.trim()) {
+                showFieldError(this, 'Username is required');
+            } else {
+                showFieldSuccess(this);
+            }
+        });
+        
+        usernameField.addEventListener('input', function() {
+            if (this.value.length > 0) {
+                clearFieldValidation(this);
+            }
+        });
+    }
+    
+    if (passwordField) {
+        passwordField.addEventListener('blur', function() {
+            if (!this.value.trim()) {
+                showFieldError(this, 'Password is required');
+            } else {
+                showFieldSuccess(this);
+            }
+        });
+        
+        passwordField.addEventListener('input', function() {
+            if (this.value.length > 0) {
+                clearFieldValidation(this);
+            }
+        });
+    }
+    
+    // Form submission with validation
+    form.addEventListener('submit', function(e) {
+        let hasErrors = false;
+        
+        // Validate all fields before submission
+        if (usernameField && !usernameField.value.trim()) {
+            showFieldError(usernameField, 'Username is required');
+            hasErrors = true;
+        }
+        
+        if (passwordField && !passwordField.value.trim()) {
+            showFieldError(passwordField, 'Password is required');
+            hasErrors = true;
+        }
+        
+        if (hasErrors) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Show loading state
+        setButtonLoading(submitBtn, true);
+    });
+});
+</script>
+{% endblock %}

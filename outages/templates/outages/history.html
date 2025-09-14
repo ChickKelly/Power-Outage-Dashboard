@@ -1,0 +1,41 @@
+{% extends 'outages/base.html' %}
+
+{% block title %}Outage History{% endblock %}
+
+{% block container_class %}history{% endblock %}
+
+{% block content %}
+    <div class="dashboard-header">
+        <h1>Outage History</h1>
+        <a href="{% url 'dashboard' %}" class="btn">Back to Dashboard</a>
+    </div>
+
+    <div class="history-table-container">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Community</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Status</th>
+                    <th>Resolved By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for outage in outages %}
+                    <tr>
+                        <td>{{ outage.community.name }}</td>
+                        <td>{{ outage.start_time|date:"Y-m-d H:i" }}</td>
+                        <td>{{ outage.end_time|date:"Y-m-d H:i"|default:"--" }}</td>
+                        <td>{% if outage.is_resolved %}Resolved{% else %}Active{% endif %}</td>
+                        <td>{{ outage.resolved_by.username|default:"--" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5">No outage history found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
