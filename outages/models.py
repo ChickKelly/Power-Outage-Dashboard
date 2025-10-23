@@ -15,6 +15,9 @@ class Community(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
     power_status = models.BooleanField(default=True)  # True for ON, False for OFF
+    voltage = models.FloatField(default=0.0)   # ✅ add voltage
+    last_update = models.DateTimeField(null=True, blank=True)  # ✅ last update timestamp
+
 
     def __str__(self):
         return self.name
@@ -31,3 +34,14 @@ class Outage(models.Model):
 
     def __str__(self):
         return f"Outage in {self.community.name} at {self.start_time}"
+# outages/models.py
+from django.db import models
+
+class City(models.Model):
+    id = models.AutoField(primary_key=True)  # optional, Django already has this
+    name = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.name} ({self.id})"

@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from .forms import SignUpForm, CustomAuthenticationForm
 from .models import Community, Outage, User
 import json
+from .forms import AddCityForm
 
 def signup(request):
     if request.method == 'POST':
@@ -53,52 +54,35 @@ def logout_view(request):
 
 @login_required
 def dashboard(request):
-    # Basic data
-    communities = Community.objects.all()
+    communities = Community.objects.all().order_by("name")
     active_outages = Outage.objects.filter(is_resolved=False)
-    
-    # Calculate statistics
+
+    # Stats
     today = timezone.now().date()
     total_communities = communities.count()
     communities_with_power = communities.filter(power_status=True).count()
     communities_without_power = communities.filter(power_status=False).count()
-    
-    # Outage statistics
     total_active_outages = active_outages.count()
-    resolved_today = Outage.objects.filter(
-        is_resolved=True,
-        end_time__date=today
-    ).count()
-    
-    # Team statistics
+    resolved_today = Outage.objects.filter(is_resolved=True, end_time__date=today).count()
+
     total_team_members = User.objects.count()
     repair_team_members = User.objects.filter(role='repair_team').count()
     admin_members = User.objects.filter(role='admin').count()
-    
-    # Recent activity
+
     recent_outages = Outage.objects.all().order_by('-start_time')[:5]
-    
-    # Monthly statistics for chart
+
+    # Chart data
     current_month = timezone.now().replace(day=1)
     monthly_outages = []
     for i in range(6):
         month_start = current_month - timedelta(days=30*i)
         month_end = month_start + timedelta(days=30)
-        count = Outage.objects.filter(
-            start_time__range=[month_start, month_end]
-        ).count()
-        monthly_outages.append({
-            'month': month_start.strftime('%b'),
-            'count': count
-        })
+        count = Outage.objects.filter(start_time__range=[month_start, month_end]).count()
+        monthly_outages.append({'month': month_start.strftime('%b'), 'count': count})
     monthly_outages.reverse()
-    
-    # Performance metrics
-    avg_resolution_time = "2.5 hours"  # This would be calculated from actual data
-    response_rate = "98.5%"
-    
+
     context = {
-        'communities': communities,
+        'communities': communities,   # ✅ now includes voltage & last_update
         'active_outages': active_outages,
         'stats': {
             'total_communities': total_communities,
@@ -109,8 +93,8 @@ def dashboard(request):
             'total_team_members': total_team_members,
             'repair_team_members': repair_team_members,
             'admin_members': admin_members,
-            'avg_resolution_time': avg_resolution_time,
-            'response_rate': response_rate,
+            'avg_resolution_time': "2.5 hours",
+            'response_rate': "98.5%",
         },
         'recent_outages': recent_outages,
         'monthly_outages_json': json.dumps(monthly_outages),
@@ -177,3 +161,17 @@ def map_view(request):
         'communities_json': json.dumps(communities_data)
     }
     return render(request, 'outages/map.html', context)
+
+@login_required
+def add_city(request):
+    if request.method == 'POST':
+        form = AddCityForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'City added successfully!')
+            return redirect('dashboard')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = AddCityForm()
+    return render(request, 'outages/add_city.html', {'form': form})

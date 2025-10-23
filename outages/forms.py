@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
 from .models import User
 import re
+from .models import Community 
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(
@@ -168,3 +169,13 @@ class CustomAuthenticationForm(AuthenticationForm):
                 self.confirm_login_allowed(self.user_cache)
         
         return self.cleaned_data
+class AddCityForm(forms.ModelForm):
+    class Meta:
+        model = Community
+        fields = ['name', 'latitude', 'longitude', 'power_status']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'latitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any'}),
+            'longitude': forms.NumberInput(attrs={'class': 'form-control', 'step': 'any'}),
+            'power_status': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }

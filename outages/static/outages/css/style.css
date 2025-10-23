@@ -1044,3 +1044,25 @@ a:hover {
         width: calc(100% - 40px);
     }
 }
+#add-location-btn {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    margin-left: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+#add-location-btn:hover {
+    background-color: #45a049;
+}
+
+/* Optional: align badge and button nicely */
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}

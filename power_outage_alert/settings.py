@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'outages',
     'channels',
+    'django_extensions',
+
 ]
 
 MIDDLEWARE = [

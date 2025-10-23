@@ -10,4 +10,6 @@ urlpatterns = [
     path('outage/<int:outage_id>/acknowledge/', views.acknowledge_outage, name='acknowledge_outage'),
     path('outage/<int:outage_id>/resolve/', views.resolve_outage, name='resolve_outage'),
     path('map/', views.map_view, name='map'),
+    path('add-city/', views.add_city, name='add_city'),
+    
 ]
