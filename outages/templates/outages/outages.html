@@ -1,0 +1,177 @@
+{% extends 'outages/base.html' %}
+{% block title %}Active Outages{% endblock %}
+
+{% block content %}
+<div class="outage-container">
+  <div class="outage-card">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-extrabold text-gray-100 tracking-wide flex items-center gap-2">
+        ⚡ Active Outages
+      </h1>
+      <a href="{% url 'dashboard' %}" class="btn-back">← Back to Dashboard</a>
+    </div>
+
+    {% if active_outages %}
+    <div class="overflow-x-auto rounded-xl">
+      <table class="min-w-full border-collapse bg-gray-800/70 backdrop-blur-lg rounded-xl shadow-lg">
+        <thead class="bg-gray-700 text-gray-300 uppercase text-sm tracking-wider">
+          <tr>
+            <th class="px-6 py-3 text-left">Community</th>
+            <th class="px-6 py-3 text-left">Start Time</th>
+            <th class="px-6 py-3 text-left">Acknowledged</th>
+            <th class="px-6 py-3 text-left">Duration</th>
+            <th class="px-6 py-3 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-200">
+          {% for outage in active_outages %}
+          <tr class="border-b border-gray-700 hover:bg-gray-700/60 transition">
+            <td class="px-6 py-4 font-medium">{{ outage.community.name }}</td>
+            <td class="px-6 py-4">{{ outage.start_time|date:"M d, Y H:i" }}</td>
+            <td class="px-6 py-4">
+              {% if outage.is_acknowledged %}
+                <span class="status-tag bg-green-600/20 text-green-400">Yes</span>
+              {% else %}
+                <span class="status-tag bg-red-600/20 text-red-400">No</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4">
+              {% if outage.start_time %}
+                {% now "UTC" as now_time %}
+                {% with diff=now_time|timesince:outage.start_time %}
+                  {{ diff }}
+                {% endwith %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 text-center">
+              <div class="flex justify-center gap-3">
+                {% if not outage.is_acknowledged %}
+                <form method="POST" action="{% url 'acknowledge_outage' outage.id %}">
+                  {% csrf_token %}
+                  <button class="btn-action btn-yellow">Acknowledge</button>
+                </form>
+                {% endif %}
+                {% if not outage.is_resolved %}
+                <form method="POST" action="{% url 'resolve_outage' outage.id %}">
+                  {% csrf_token %}
+                  <button class="btn-action btn-green">Resolve</button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="no-outages">
+      <h2>🎉 No Active Outages</h2>
+      <p>Everything is running smoothly. Great job keeping the lights on!</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+/* 🩶 Dark Mode Background */
+.outage-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #111827, #1f2937, #111827);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+/* 🧊 Card layout */
+.outage-card {
+  width: 100%;
+  max-width: 1000px;
+  background: rgba(31, 41, 55, 0.9);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  border-radius: 1.2rem;
+  padding: 2.5rem;
+}
+
+/* 🧭 Back Button */
+.btn-back {
+  background: linear-gradient(90deg, #2563eb, #1d4ed8);
+  color: #f3f4f6;
+  padding: 0.6rem 1rem;
+  border-radius: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+  background: linear-gradient(90deg, #1d4ed8, #2563eb);
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(37, 99, 235, 0.3);
+}
+
+/* ✅ Status tags */
+.status-tag {
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* 🎯 Action buttons */
+.btn-action {
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.8rem;
+  font-weight: 600;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.85rem;
+}
+
+.btn-yellow {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+.btn-yellow:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+}
+
+.btn-green {
+  background: linear-gradient(90deg, #10b981, #047857);
+}
+
+.btn-green:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+}
+
+/* 🎉 No outages */
+.no-outages {
+  text-align: center;
+  background: rgba(55, 65, 81, 0.6);
+  border-radius: 1rem;
+  padding: 3rem;
+  margin-top: 2rem;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4);
+}
+
+.no-outages h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+
+.no-outages p {
+  color: #9ca3af;
+  margin-top: 0.5rem;
+}
+</style>
+{% endblock %}

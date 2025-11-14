@@ -1,0 +1,165 @@
+{% extends 'outages/base.html' %}
+{% block title %}Edit Community{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="edit-card">
+    <h1 class="page-title">🏙️ Edit Community</h1>
+    <p class="page-subtitle">Update your community information below.</p>
+
+    <form method="POST" class="edit-form">
+      {% csrf_token %}
+
+      <label class="form-label">Community Name</label>
+      <input type="text" name="name" value="{{ community.name }}" class="form-input" placeholder="Enter community name">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="form-label">Latitude</label>
+          <input type="number" step="any" name="latitude" value="{{ community.latitude }}" class="form-input" placeholder="Enter latitude">
+        </div>
+        <div>
+          <label class="form-label">Longitude</label>
+          <input type="number" step="any" name="longitude" value="{{ community.longitude }}" class="form-input" placeholder="Enter longitude">
+        </div>
+      </div>
+
+      <label class="form-label">Powerwatch Status</label>
+      <select name="power_status" class="form-select">
+        <option value="True" {% if community.power_status %}selected{% endif %}>Online</option>
+        <option value="False" {% if not community.power_status %}selected{% endif %}>Offline</option>
+      </select>
+
+      <div class="button-group">
+        <a href="{% url 'community_list' %}" class="btn-cancel">← Cancel</a>
+        <button type="submit" class="btn-save">💾 Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+/* 🌈 Background and layout */
+.page-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #6366f1, #4f46e5, #7c3aed);
+  background-size: 200% 200%;
+  animation: gradientShift 10s ease infinite;
+  padding: 2rem;
+}
+
+/* ✨ Card styling */
+.edit-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
+  border-radius: 1.5rem;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 600px;
+  color: white;
+  text-align: center;
+}
+
+/* 💡 Headings */
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+  color: #e0e7ff;
+  margin-bottom: 2rem;
+  font-weight: 300;
+}
+
+/* 🧾 Form elements */
+.form-label {
+  display: block;
+  text-align: left;
+  color: #e0e7ff;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+  margin-top: 1rem;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 0.8rem;
+  border: none;
+  outline: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.form-input:focus,
+.form-select:focus {
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* 🧠 Buttons */
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-cancel,
+.btn-save {
+  flex: 1;
+  padding: 0.9rem 1rem;
+  font-weight: 600;
+  border-radius: 0.8rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  border: none;
+}
+
+.btn-cancel {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(1.02);
+}
+
+.btn-save {
+  background: linear-gradient(90deg, #f43f5e, #ec4899, #eab308);
+  color: white;
+  box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
+}
+
+.btn-save:hover {
+  background: linear-gradient(90deg, #eab308, #ec4899, #f43f5e);
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
+/* ✨ Gradient animation */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+</style>
+{% endblock %}

@@ -1,41 +1,106 @@
 {% extends 'outages/base.html' %}
-
-{% block title %}Outage History{% endblock %}
-
-{% block container_class %}history{% endblock %}
+{% block title %}Voltage & Outage History{% endblock %}
 
 {% block content %}
-    <div class="dashboard-header">
-        <h1>Outage History</h1>
-        <a href="{% url 'dashboard' %}" class="btn">Back to Dashboard</a>
-    </div>
+<div class="history-container">
+  <div class="history-card">
+    <h1 class="text-3xl font-extrabold text-gray-100 mb-6 text-center">
+      ⚡ Voltage & Outage History
+    </h1>
 
-    <div class="history-table-container">
-        <table class="history-table">
-            <thead>
-                <tr>
-                    <th>Community</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
-                    <th>Status</th>
-                    <th>Resolved By</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for outage in outages %}
-                    <tr>
-                        <td>{{ outage.community.name }}</td>
-                        <td>{{ outage.start_time|date:"Y-m-d H:i" }}</td>
-                        <td>{{ outage.end_time|date:"Y-m-d H:i"|default:"--" }}</td>
-                        <td>{% if outage.is_resolved %}Resolved{% else %}Active{% endif %}</td>
-                        <td>{{ outage.resolved_by.username|default:"--" }}</td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="5">No outage history found.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    {% if recent_outages %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-gray-800/70 backdrop-blur-lg rounded-xl shadow-lg">
+        <thead class="bg-gray-700 text-gray-300 uppercase text-sm tracking-wider">
+          <tr>
+            <th class="px-6 py-3 text-left">Community</th>
+            <th class="px-6 py-3 text-left">Start Time</th>
+            <th class="px-6 py-3 text-left">Resolution Time</th>
+            <th class="px-6 py-3 text-left">Duration</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-200">
+          {% for outage in recent_outages %}
+          <tr class="border-b border-gray-700 hover:bg-gray-700/60 transition">
+            <td class="px-6 py-4 font-medium">{{ outage.community.name }}</td>
+            <td class="px-6 py-4">{{ outage.start_time|date:"M d, Y H:i" }}</td>
+            <td class="px-6 py-4">
+              {% if outage.resolved_time %}
+                {{ outage.resolved_time|date:"M d, Y H:i" }}
+              {% else %}
+                <span class="text-yellow-400">Pending...</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4">
+              {% if outage.resolved_time %}
+                {% with diff=outage.resolved_time|timesince:outage.start_time %}
+                  {{ diff }}
+                {% endwith %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+    {% else %}
+    <div class="no-outages">
+      <h2>✅ No recent outages recorded.</h2>
+      <p class="text-gray-400 mt-2">Everything is stable right now.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+/* 🩶 Dark Mode Layout */
+.history-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #111827, #1f2937, #111827);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.history-card {
+  width: 100%;
+  max-width: 900px;
+  background: rgba(31, 41, 55, 0.9);
+  border: 1px solid rgba(75, 85, 99, 0.5);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  border-radius: 1.2rem;
+  padding: 2rem;
+}
+
+/* 📊 Table */
+table {
+  width: 100%;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+th, td {
+  padding: 1rem;
+  text-align: left;
+}
+
+.no-outages {
+  text-align: center;
+  background: rgba(55, 65, 81, 0.6);
+  border-radius: 1rem;
+  padding: 3rem;
+  margin-top: 2rem;
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4);
+}
+
+.no-outages h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+</style>
 {% endblock %}

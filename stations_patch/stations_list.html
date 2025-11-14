@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Stations</h2>
+<ul>
+  {% for station in stations %}
+    <li>{{ station.name }} — {{ station.location }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}
